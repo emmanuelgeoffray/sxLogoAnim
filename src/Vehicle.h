@@ -112,7 +112,7 @@ class Vehicle {
     void boundaries() {
       float d = 25;
 
-      ofVec2f desired;
+      ofVec2f desired = ofVec2f(0,0);
 
       if (location.x < d) {
         desired = ofVec2f(maxSpeed, velocity.y);
@@ -128,7 +128,7 @@ class Vehicle {
         desired = ofVec2f(velocity.x, -maxSpeed);
       } 
 
-      if (desired != 0) {
+      if (desired != ofVec2f(0,0)) {
         desired.normalize();
         desired *= maxSpeed;
         ofVec2f steer = desired - velocity;
