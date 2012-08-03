@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ofMain.h"
+#include "ofxSVGTiny.h"
 
 class Vehicle {
 
@@ -37,7 +38,7 @@ class Vehicle {
 
     // This function implements Craig Reynolds' path following algorithm
     // http://www.red3d.com/cwr/steer/PathFollow.html
-    void follow(const ofPolyline & p, float radius) {
+    void follow(ofxSVGTiny & svg, float radius) {
 
       // Predict location 25 (arbitrary choice) frames ahead
       ofVec2f predict = velocity;
@@ -47,34 +48,43 @@ class Vehicle {
 
       // Now we must find the normal to the path from the predicted location
       // We look at the normal for each line segment and pick out the closest one
-      float worldRecord = 1000000;  // Start with a very high record distance that can easily be beaten
+      float worldRecord = 100000000000;  // Start with a very high record distance that can easily be beaten
 
-      // Loop through all points of the path
-      for (unsigned int i = 0; i < p.size()-1; i++) {
+      // Loop through all path
+      for (int j = 0; j < svg.getNumPath(); j++){
+        vector<ofPolyline> &lines = svg.getPathAt(j).getOutline();
+        for (unsigned int k = 0; k < lines.size(); k++)
+        {
+          ofPolyline p = lines[k];
+	
+          // Loop through all points of the path
+          for (unsigned int i = 0; i < p.size()-1; i++) {
 
-        // Look at a line segment
-        ofVec2f a = p[i];
-        ofVec2f b = p[i+1];
+            // Look at a line segment
+            ofVec2f a = p[i];
+            ofVec2f b = p[i+1];
 
-        // Get the normal point to that line
-        ofVec2f normalPointToThatLine = getNormalPoint(predictLoc, a, b);
+            // Get the normal point to that line
+            ofVec2f normalPointToThatLine = getNormalPoint(predictLoc, a, b);
 
-        // This only works because we know our path goes from left to right
-        if (normalPointToThatLine.x >= a.x && normalPointToThatLine.x <= b.x) {
+            // This only works because we know our path goes from left to right
+            if (isInside(normalPointToThatLine, a, b)){
 
-          // How far away are we from the path?
-          float distance = (predictLoc - normalPointToThatLine).length();
-          // Did we beat the record and find the closest line segment?
-          if (distance < worldRecord) {
-            worldRecord = distance;
-            // If so the target we want to steer towards is the normal
-            normalPoint = normalPointToThatLine;
+              // How far away are we from the path?
+              float distance = (predictLoc - normalPointToThatLine).length();
+              // Did we beat the record and find the closest line segment?
+              if (distance < worldRecord) {
+                worldRecord = distance;
+                // If so the target we want to steer towards is the normal
+                normalPoint = normalPointToThatLine;
 
-            // Find target point a little further ahead of normal
-            dir = b - a;
-            dir.normalize();
-            dir *= 10;  // This could be based on velocity instead of just an arbitrary 10 pixels
-            target = normalPoint + dir;
+                // Find target point a little further ahead of normal
+                dir = b - a;
+                dir.normalize();
+                dir *= 10;  // This could be based on velocity instead of just an arbitrary 10 pixels
+                target = normalPoint + dir;
+              }
+            }
           }
         }
       }
@@ -85,6 +95,18 @@ class Vehicle {
         isSeeking = true;
       } else isSeeking = false;
     }
+
+    bool isInside(const ofVec2f & x, const ofVec2f & a, const ofVec2f b){
+      ofVec2f aa;
+      ofVec2f bb;
+      aa.x = min(a.x, b.x);
+      aa.y = min(a.y, b.y);
+      bb.x = max(a.x, b.x);
+      bb.y = max(a.y, b.y);
+      ofRectangle rect(aa, (bb - aa).x, (bb - aa).y);
+      return x.x >= aa.x && x.x <=bb.x && x.y >= aa.y && x.y <=bb.y;
+    }
+
 
 
     // A function to get the normal point from a point (p) to a line segment (a-b)
@@ -184,8 +206,10 @@ class Vehicle {
         // Draw normal location
         ofSetColor(0);
         ofLine(predictLoc.x, predictLoc.y, normalPoint.x, normalPoint.y);
+        ofSetColor(0, 0, 255);
         ofEllipse(normalPoint.x, normalPoint.y, 4, 4);
         if (isSeeking) ofSetColor(255, 0, 0);
+        else ofSetColor(0);
         ofEllipse(target.x+dir.x, target.y+dir.y, 8, 8);
       }
 
