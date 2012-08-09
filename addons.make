@@ -1,1 +1,4 @@
 ofxSVGTiny
+ofxGui
+ofxXmlSettings
+ofxOsc

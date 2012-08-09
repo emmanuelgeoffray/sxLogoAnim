@@ -3,6 +3,8 @@
 #include "ofMain.h"
 #include "ofxSVGTiny.h"
 #include "Vehicle.h"
+#include "ofxGui.h"
+#include "ofxOsc.h"
 
 class testApp : public ofBaseApp{
 
@@ -21,8 +23,14 @@ class testApp : public ofBaseApp{
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
     
+    void updateOsc();
+
     bool isDebugMode;
 		ofxSVGTiny svg;
     float radius;
     vector<Vehicle> vehicles;
+    ofxFloatSlider maxSpeed, maxForce, historyLength;
+    ofxToggle drawLogo, drawHistory, drawPath;
+    ofxPanel gui;
+    ofxOscReceiver receiver;
 };

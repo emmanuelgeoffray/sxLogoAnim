@@ -24,9 +24,9 @@ class Vehicle {
       location += velocity;
       // Reset acceleration to 0 each cycle
       acceleration *= 0;
-
+      
       history.push_back(location);
-      if (history.size() > 100){
+      while (history.size() > historyLength){
         history.pop_front();
       }
     }
@@ -55,14 +55,14 @@ class Vehicle {
         vector<ofPolyline> &lines = svg.getPathAt(j).getOutline();
         for (unsigned int k = 0; k < lines.size(); k++)
         {
-          ofPolyline p = lines[k];
+          ofPolyline  & p = lines[k];
 	
           // Loop through all points of the path
           for (unsigned int i = 0; i < p.size()-1; i++) {
 
             // Look at a line segment
-            ofVec2f a = p[i];
-            ofVec2f b = p[i+1];
+            ofVec3f& a = p[i];
+            ofVec3f& b = p[i+1];
 
             // Get the normal point to that line
             ofVec2f normalPointToThatLine = getNormalPoint(predictLoc, a, b);
@@ -89,21 +89,20 @@ class Vehicle {
         }
       }
       // Only if the distance is greater than the path's radius do we bother to steer
-      if (worldRecord > radius) {
+      //if (worldRecord > radius) {
         seek(target);
         // for debug
         isSeeking = true;
-      } else isSeeking = false;
+      //} else isSeeking = false;
     }
 
-    bool isInside(const ofVec2f & x, const ofVec2f & a, const ofVec2f b){
+    bool isInside(const ofVec2f & x, const ofVec3f & a, const ofVec3f & b){
       ofVec2f aa;
       ofVec2f bb;
       aa.x = min(a.x, b.x);
       aa.y = min(a.y, b.y);
       bb.x = max(a.x, b.x);
       bb.y = max(a.y, b.y);
-      ofRectangle rect(aa, (bb - aa).x, (bb - aa).y);
       return x.x >= aa.x && x.x <=bb.x && x.y >= aa.y && x.y <=bb.y;
     }
 
@@ -111,7 +110,7 @@ class Vehicle {
 
     // A function to get the normal point from a point (p) to a line segment (a-b)
     // This function could be optimized to make fewer new Vector objects
-    ofVec2f getNormalPoint(const ofVec2f & p, const ofVec2f & a, const ofVec2f & b) {
+    ofVec2f getNormalPoint(const ofVec2f & p, const ofVec3f & a, const ofVec3f & b) {
       // Vector from a to p
       ofVec2f ap = p - a;
       // Vector from a to b
@@ -119,8 +118,8 @@ class Vehicle {
       ab.normalize(); // Normalize the line
       // Project vector "diff" onto line by using the dot product
       ab *= ap.dot(ab);
-      ofVec2f normalPoint = a + ab;
-      return normalPoint;
+      ab += a;
+      return ab;
     }
 
     // Wraparound
@@ -195,7 +194,7 @@ class Vehicle {
       applyForce(steer);
     }
 
-    void draw( bool debug = false){
+    void draw( bool debug = false, bool drawHistory = false){
       // Draw the debugging stuff
       if (debug) {
         ofFill();
@@ -214,16 +213,20 @@ class Vehicle {
       }
 
       // Draw history
-      /*
+      ofSetColor(0);
+      ofEllipse(location.x, location.y, 1, 1);
+      if (drawHistory){ 
          ofNoFill();
          ofBeginShape();
          for (unsigned int i = 0; i < history.size(); i++){
          ofVertex(history[i].x, history[i].y);
          }
          ofEndShape();
-       */
+      }
+       
 
       // Draw a triangle rotated in the direction of velocity
+      /*
       float theta = ofVec2f(1, 0).angle(velocity) + 90;
       ofPushMatrix();
       ofTranslate(location.x,location.y);
@@ -245,6 +248,7 @@ class Vehicle {
       ofEndShape(true);
 
       ofPopMatrix();
+      */
     }
 
     void setLocation( float x, float y){
@@ -257,6 +261,7 @@ class Vehicle {
 
     void setMaxForce( float f){maxForce = f;}
     void setMaxSpeed( float s){maxSpeed = s;}
+    void setHistoryLength( float h){historyLength = h;}
 
     const ofVec2f& getLocation() const{
       return location;
@@ -273,6 +278,7 @@ class Vehicle {
     float r;
     float maxForce;
     float maxSpeed;
+    unsigned int historyLength;
 
     deque<ofVec2f> history;
     
